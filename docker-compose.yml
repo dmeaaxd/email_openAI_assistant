@@ -1,14 +1,14 @@
 version: '3'
 
 services:
-  script1:
+  start:
     build:
       context: .
       dockerfile: Dockerfile_start
     restart: always
 
 
-  script2:
+  process:
     build:
       context: .
       dockerfile: Dockerfile_process
