@@ -24,14 +24,12 @@ username = os.getenv("EMAIL_LOGIN")
 password = os.getenv("EMAIL_PASSWORD")
 
 def connect_imap():
-    print("Подключение к IMAP серверу...")
     imap = imaplib.IMAP4_SSL("imap.gmail.com")
     imap.login(username, password)
     print("Подключение к IMAP серверу выполнено.")
     return imap
 
 def connect_smtp():
-    print("Подключение к SMTP серверу...")
     smtp = smtplib.SMTP_SSL("smtp.gmail.com", 465)
     smtp.login(username, password)
     print("Подключение к SMTP серверу выполнено.")
@@ -49,8 +47,11 @@ def email_exists(session: Session, email: str) -> bool:
         return False
 
 
-def check_inbox(imap, smtp):
+def check_inbox():
     try:
+        imap = connect_imap()
+        smtp = connect_smtp()
+
         print("Проверка входящих сообщений...")
         imap.select("INBOX")
         status, messages = imap.search(None, '(UNSEEN)')
@@ -93,6 +94,8 @@ def check_inbox(imap, smtp):
                                 finally:
                                     session.close()
                             imap.store(num, '+FLAGS', '\\Seen')
+        imap.logout()
+        smtp.close()
     except imaplib.IMAP4.abort as e:
         print(f"Ошибка IMAP: {e}. Переподключение...")
         return False
@@ -120,19 +123,20 @@ def send_reply(session: Session, smtp, to_address, original_msg, client_id):
 
 def main():
     while True:
-        imap = connect_imap()
-        smtp = connect_smtp()
         try:
+            # imap = connect_imap()
+            # smtp = connect_smtp()
+
             while True:
-                if not check_inbox(imap, smtp):
-                    break
+                check_inbox()
                 time.sleep(10)
+
         except KeyboardInterrupt:
             print("Программа прервана. Закрытие соединения.")
             break
-        finally:
-            imap.logout()
-            smtp.quit()
+        # finally:
+        #     imap.logout()
+        #     smtp.quit()
 
 if __name__ == "__main__":
     main()

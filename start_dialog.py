@@ -42,15 +42,16 @@ main_prompt = """Ты нейро-сотрудник компании Avatarex и
 
 Ты пишешь письмо руководителю отдела продаж компании, обращаешься к нему по имени, хвалишь успехи его компании и его личные достижения и подводишь к мысли записаться на экскурсию в Avatarex чтобы он узнал, как нейро-сотрудники помогут его компании существенно увеличить метрики в отделе продаж - конверсии, удовлетворённость клиентов, средний чек.
 
-Мое имя - Владимир Иванов. 
+Твое имя - Владимир Иванов. 
 
 Пиши только сообщение и ничего более!
 """
 
 while True:
-    print("Проверка на запуск...")
-    checkbox_status = settings_sheet.cell(1, 7).value
     try:
+        print("Проверка на запуск...")
+        checkbox_status = settings_sheet.cell(1, 7).value
+
         if checkbox_status == 'TRUE':
             print("Запуск...")
 
@@ -103,10 +104,10 @@ while True:
             smtp.quit()
             session.close()
 
-    except Exception as e:
-        print(f"Cycle failed: {e}")
-        session.rollback()  # Добавил откат сессии
-        session.close()  # Закрытие текущей сессии
-        session = Session()  # Открытие новой сессии
+        time.sleep(5)
 
-    time.sleep(5)
+    except Exception as e:
+        print(f"ПУНЭЭЭЙ. Еще раз! {e}")
+        session.rollback()
+        session.close()
+        session = Session()
