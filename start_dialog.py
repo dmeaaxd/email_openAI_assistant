@@ -62,9 +62,21 @@ while True:
             sphere = settings_sheet.cell(2, 4).value
             special_prompt = settings_sheet.cell(2, 5).value
 
-            new_client = Client(email=email, name=name, company=company, sphere=sphere, special_prompt=special_prompt)
-            session.add(new_client)
-            session.commit()
+            # new_client = Client(email=email, name=name, company=company, sphere=sphere, special_prompt=special_prompt)
+            # session.add(new_client)
+            # session.commit()
+
+            # Check if client already exists in the database
+            existing_client = session.query(Client).filter_by(email=email).first()
+
+            if existing_client:
+                print(f"Клиент с email {email} уже существует. Используем существующего клиента.")
+                new_client = existing_client
+            else:
+                print(f"Клиент с email {email} не найден. Создание нового клиента.")
+                new_client = Client(email=email, name=name, company=company, sphere=sphere, special_prompt=special_prompt)
+                session.add(new_client)
+                session.commit()
 
             greeting_message = generate_greeting(f'{main_prompt}\n\nИмя клиента - {new_client.name}, Название компании клиента - {new_client.company}, сфера деятельности - {new_client.sphere}.\n{new_client.special_prompt}')
 

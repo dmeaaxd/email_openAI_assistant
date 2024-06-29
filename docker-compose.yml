@@ -4,13 +4,7 @@ services:
   start:
     build:
       context: .
-      dockerfile: Dockerfile_start
+      dockerfile: Dockerfile
     restart: always
 
-
-  process:
-    build:
-      context: .
-      dockerfile: Dockerfile_process
-    restart: always
 

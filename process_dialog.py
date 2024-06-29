@@ -7,6 +7,7 @@ import os
 import dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError
 from entity import Base, Client, Message
 from openAI_module.generate_mess import *
 from utils.funcs import *
@@ -14,10 +15,9 @@ from utils.funcs import *
 dotenv.load_dotenv()
 
 # Настройка SQLAlchemy
-engine = create_engine(os.getenv("DB_URL"))
+engine = create_engine(os.getenv("DB_URL"), pool_pre_ping=True)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
-session = Session()
 
 # Настройка Email агента
 username = os.getenv("EMAIL_LOGIN")
@@ -39,31 +39,26 @@ def connect_smtp():
 
 def email_exists(session: Session, email: str) -> bool:
     print(f"Проверка существования email: {email}")
-    exists = session.query(Client).filter_by(email=email).first() is not None
-    print(f"Email {'найден' if exists else 'не найден'} в базе данных.")
-    return exists
+    try:
+        exists = session.query(Client).filter_by(email=email).first() is not None
+        print(f"Email {'найден' if exists else 'не найден'} в базе данных.")
+        return exists
+    except OperationalError as e:
+        print(f"Ошибка при доступе к базе данных: {e}")
+        session.rollback()
+        return False
 
 
 def check_inbox(imap, smtp):
     try:
         print("Проверка входящих сообщений...")
-        try:
-            imap.select("INBOX")
-        except Exception as e:
-            print(f"Ошибка поиска ящиков в клиенте почты: {e}")
-
-        try:
-            status, messages = imap.search(None, '(UNSEEN)')
-        except Exception as e:
-            print(f"Ошибка присвоения переменным почтовых значений: {e}")
-
+        imap.select("INBOX")
+        status, messages = imap.search(None, '(UNSEEN)')
         print(f"Статус поиска сообщений: {status}, Найденные сообщения: {messages}")
 
         if status == "OK":
             for num in messages[0].split():
                 status, data = imap.fetch(num, '(RFC822)')
-                # print(f"Статус получения сообщения: {status}, Данные: {data}")
-
                 if status == "OK":
                     for response_part in data:
                         if isinstance(response_part, tuple):
@@ -72,6 +67,7 @@ def check_inbox(imap, smtp):
                             subject = msg['Subject']
                             print(f"Новое письмо от {client_email} с темой: {subject}")
 
+                            session = Session()
                             if email_exists(session, client_email):
                                 try:
                                     client = session.query(Client).filter_by(email=client_email).one()
@@ -90,13 +86,13 @@ def check_inbox(imap, smtp):
 
                                     print(f"Текст входящего сообщения: {message_text}")
                                     create_message_for_user(session, client.id, 'user', message_text)
-                                    send_reply(smtp, client_email, msg, client.id)
+                                    send_reply(session, smtp, client_email, msg, client.id)
                                     print(f"Ответ отправлен на почту в {client_email}")
                                 except Exception as e:
                                     print(f"Ошибка отправки сообщения: {e}")
-
+                                finally:
+                                    session.close()
                             imap.store(num, '+FLAGS', '\\Seen')
-
     except imaplib.IMAP4.abort as e:
         print(f"Ошибка IMAP: {e}. Переподключение...")
         return False
@@ -105,7 +101,7 @@ def check_inbox(imap, smtp):
 
     return True
 
-def send_reply(smtp, to_address, original_msg, client_id):
+def send_reply(session: Session, smtp, to_address, original_msg, client_id):
     print(f"Генерация ответа для {to_address}...")
     openai_answer = generate_answer(collect_mess_into_dict(session, client_id))
     print(f"Ответ сгенерирован: {openai_answer}")
@@ -122,7 +118,6 @@ def send_reply(smtp, to_address, original_msg, client_id):
     print("Ответ записан в БД")
     print(f"Ответ отправлен на {to_address}.")
 
-
 def main():
     while True:
         imap = connect_imap()
@@ -138,7 +133,6 @@ def main():
         finally:
             imap.logout()
             smtp.quit()
-            session.close()
 
 if __name__ == "__main__":
     main()
