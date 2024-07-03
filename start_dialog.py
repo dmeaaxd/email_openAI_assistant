@@ -37,15 +37,8 @@ client = gspread.authorize(creds)
 sheet_url = os.getenv("SHEET_URL")
 spreadsheet = client.open_by_url(sheet_url)
 settings_sheet = spreadsheet.worksheet("Настройки")
+prompt_sheet = spreadsheet.worksheet("Промпт")
 
-main_prompt = """Ты нейро-сотрудник компании Avatarex и твоя задача вести переписку через email с потенциальными клиентами, которым ты должен продать идею найма нейро-сотрудников.
-
-Ты пишешь письмо руководителю отдела продаж компании, обращаешься к нему по имени, хвалишь успехи его компании и его личные достижения и подводишь к мысли записаться на экскурсию в Avatarex чтобы он узнал, как нейро-сотрудники помогут его компании существенно увеличить метрики в отделе продаж - конверсии, удовлетворённость клиентов, средний чек.
-
-Твое имя - Владимир Иванов. 
-
-Пиши только сообщение и ничего более!
-"""
 
 while True:
     try:
@@ -62,12 +55,9 @@ while True:
             company = settings_sheet.cell(2, 3).value
             sphere = settings_sheet.cell(2, 4).value
             special_prompt = settings_sheet.cell(2, 5).value
+            main_prompt = prompt_sheet.cell(1, 1).value
 
-            # new_client = Client(email=email, name=name, company=company, sphere=sphere, special_prompt=special_prompt)
-            # session.add(new_client)
-            # session.commit()
 
-            # Check if client already exists in the database
             existing_client = session.query(Client).filter_by(email=email).first()
 
             if existing_client:
@@ -81,7 +71,7 @@ while True:
 
             greeting_message = generate_greeting(f'{main_prompt}\n\nИмя клиента - {new_client.name}, Название компании клиента - {new_client.company}, сфера деятельности - {new_client.sphere}.\n{new_client.special_prompt}')
 
-            message = MIMEText(greeting_message)
+            message = MIMEText(greeting_message + "\n\nНейропродавец создан на платформе Avatarex.pro")
             message['Subject'] = "Наймите нейро-сотрудников для вашего отдела продаж!"
             message['From'] = username
             message['To'] = new_client.email
