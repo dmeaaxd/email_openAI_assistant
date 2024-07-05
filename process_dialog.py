@@ -110,10 +110,18 @@ def send_reply(session: Session, smtp, to_address, original_msg, client_id):
     print(f"Ответ сгенерирован: {openai_answer}")
 
     # reply = MIMEText(openai_answer + "\n\nНейропродавец создан на платформе Avatarex.pro")
-    link_text = "Avatarex.pro"
-    link = "https://avatarex.pro"
-    text_message = f"{openai_answer}\n\nНейропродавец создан на платформе {link_text} ({link})"
-    reply = MIMEText(text_message, "plain")
+    # link_text = "Avatarex.pro"
+    # link = "https://avatarex.pro"
+    # text_message = f"{openai_answer}\n\nНейропродавец создан на платформе {link_text} ({link})"
+    # reply = MIMEText(text_message, "plain")
+    text_message = f"""
+    <pre>{openai_answer}</pre>
+    <br>
+    <br>
+    <p>Нейропродавец создан на платформе <a href="https://avatarex.pro">Avatarex.pro</a></p>
+    """
+    reply = MIMEText(text_message, "html")
+
     reply['Subject'] = f"Re: {original_msg['Subject']}"
     reply['From'] = username
     reply['To'] = to_address
