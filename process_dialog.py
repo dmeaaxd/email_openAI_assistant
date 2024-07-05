@@ -109,7 +109,7 @@ def send_reply(session: Session, smtp, to_address, original_msg, client_id):
     openai_answer = generate_answer(collect_mess_into_dict(session, client_id))
     print(f"Ответ сгенерирован: {openai_answer}")
 
-    reply = MIMEText(openai_answer + "\n\nНейропродавец создан на платформе Avatarex.pro")
+    reply = MIMEText(openai_answer + "\n\nНейропродавец создан на платформе " + u'<a href="avatarex.pro">Avatarex.pro</a>','html')
     reply['Subject'] = f"Re: {original_msg['Subject']}"
     reply['From'] = username
     reply['To'] = to_address
