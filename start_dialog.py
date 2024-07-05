@@ -72,18 +72,11 @@ while True:
             greeting_message = generate_greeting(f'{main_prompt}\n\nИмя клиента - {new_client.name}, Название компании клиента - {new_client.company}, сфера деятельности - {new_client.sphere}.\n{new_client.special_prompt}')
 
             # message = MIMEText(greeting_message + "\n\nНейропродавец создан на платформе Avatarex.pro")
-            # link_text = "Avatarex.pro"
-            # link = "https://avatarex.pro"
-            # text_message = f"{greeting_message}\n\nНейропродавец создан на платформе {link_text} ({link})"
-            # message = MIMEText(text_message, "plain")
+            link_text = "Avatarex.pro"
+            link = "https://avatarex.pro"
+            text_message = f"{greeting_message}\n\nНейропродавец создан на платформе {link_text}({link})"
+            message = MIMEText(text_message, "plain")
 
-            text_message = f"""
-            <pre>{greeting_message}</pre>
-            <br>
-            <br>
-            <p>Нейропродавец создан на платформе <a href="https://avatarex.pro">Avatarex.pro</a></p>
-            """
-            message = MIMEText(text_message, "html")
 
             message['Subject'] = "Наймите нейро-сотрудников для вашего отдела продаж!"
             message['From'] = username
